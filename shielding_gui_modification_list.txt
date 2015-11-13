@@ -1,0 +1,257 @@
+ shielding_gui.pro version/modification list
+
+				050502	display_pet_ct_050502
+				Original hacked version (from extract_tumour), built
+				to display PET/CT data saved in .sav format.
+
+				050503	display_pet_ct_050503
+				Removed extraneous menu items.  Allows for load of
+				PET, CT or tumour data from separate bulk files.
+
+				05090X display_pet_ct
+				Changed PET display to reverse greyscale.
+
+				060201 shielding_gui
+				Started to customize program for observer variability
+				study.  Changed common block to info structure so
+				that multiple instances of the program can be run.
+				GUI the same as display_pet_ct (no thumbnails,
+				toolbar on the left).
+
+				060203 shielding_gui
+				Changed the GUI.
+
+				060208 shielding_gui
+				Program includes basic display and thumbnail functionality.
+				Implemented poly_roi and roi_delete.
+
+				060215
+				move_roi and move_roi vertex are working.  Added ROI save
+				and restore features.
+
+				060217
+				Added freehand ROI tool, double click on thumnail to
+				select main images, fixed image info update on
+				thumbnail selection.  Added continuous display of
+				ROI motion (vertex and entire), display of crosshairs
+				on both PET and CT.  Added pan tool.
+
+				060221
+				Add ROI copy/paste.
+
+				060222
+				Fixed CT only scenario and completely modified layout so
+				that thumbnails are now on the left of the screen, not at
+				the bottom and the image scroll bar is to the left of the
+				PET/CT images, not the right.
+
+				060223
+				Added ROIs to the thumbnail images.  Added a check to
+				see if the user wants to save ROIs before changing the
+				image data.  Fixed the thumbnail highlight. Thumbnails
+				are always unzoomed.
+
+				060227
+				Undo/redo ROI working.  Can undo new vertices and move
+				but cannot reverse delete.  The undo list is cleared
+				when the user changes the current ROI.
+
+				060228
+				Now use MKgrROI to draw VP ROIs so that the names of user-
+				drawn ROIs can be displayed/updated with the ROI.
+
+				060229
+				Implementation of MKgrROI working.  Added ROI renaming
+				and deletion via right-click menu.
+
+				060302
+				Added copy/paste through right-click menu.  Also
+				implemented a status/help bar at the bottom of the
+				window that indicates the current mode and user options.
+				Changed the automatic naming of ROIs and copied ROIs.
+
+				060303
+				New and exciting nudge tool!
+
+				060304
+				Changed UI setup so that buttons are no longer all
+				connected through an exclusive base.  On/off states are
+				controlled programatically, not automatically.  Each
+				button has its own base (necessary for on/off state).
+				This change was necessary to allow for the appropriate
+				placement of the nudge tool size selector on the toobar.
+				Also removed the crosshairs off button.
+
+				060310
+				Added user prefs.
+
+				060607 shielding_gui
+				Basic UI up.  Can load a bitmap and add/delete uptake
+				points.
+
+				060609
+				First working version.  Can load a simple bitmap and add/
+				move/delete uptake and imaging points.  Calculates a
+				weekly dose image from these points.
+
+				060614
+				Added two line ROI options for drawing shields and inputs
+				for specifying materials and thicknesses.  The output
+				dose image now accounts for shield attenuation.
+
+				060615
+				Added .tif reader.  Last save before big UI change.
+
+				060619
+				Rearranged UI (tables).  Added popup windows for input of
+				structure and source specifications.  Added more info
+				to the tables.  Divided the generic ROI context menu into
+				structure and source context menus.
+
+				060620
+				Changed vp UI -- only one viewport now.  Fixed context menus
+				(context menus were not picking up the selected ROI).
+
+				060621
+				Works with SPECT data now.
+
+				060622
+				Added shielding (lead only, down to 140 keV).
+
+				060627
+				Added multienergetic tracer handling through the new
+				MKTracer object.
+
+				060627a
+				Changed zoom so that the mode isn't changed when zoom
+				is selected.  Zoom out works gradually instead of zooming out
+				completely.  Recentre now sets zoom to 1.  vp2imgscale no
+				longer changes with zoom.
+
+				060629
+				Added ROI and session save/open.  Changed ROI delete to accept
+				a ROI object instead of searching for the current.  Added a
+				mechanism to destroy extraneous ROIs during SetCurrentROI.
+
+				060630
+				Added query point functionality.
+
+				060630a
+				Fixed viewport size so that zoom will fill the entire
+				viewport instead of being limited to the original image
+				dimensions.
+
+				060702
+				Added user edit of data in tables, turned on or off through
+				the b_tables_editable parameter in the user prefs file.
+				ROI names cannot be edited in the tables, as at present,
+				the names are used to determined the ROI type (I,U,Q or S).
+				Fixed ROI open.
+
+				060702a
+				Prompt for description of query point and added descriptions
+				to displayed query text.
+
+				060702b
+				Major overhaul of imaging and uptake source recording.
+				The user can now specify multiple tracers for individual
+				ROIs (used to be one tracer per ROI).
+
+				060703
+				Version used to generate first set of data sent to Curtis.
+
+				060704
+				Sped up Calculate.  Fixed LinesIntersect.  Removed print
+				statements.  Created a tracer/shield lookup table.
+
+				060705
+				Further improvements to Calculate.  Moved calls to IDLgrROI:
+				getProperty and interp outside of the loop, as they seem
+				to be most time consuming.
+
+				060706
+				Changed the way buildup factors are calculated.  Now
+				determined using a Taylor approximation (from Shultis and
+				Faw) instead of a lookup table.  Added concrete.
+
+				060707
+				Version used to produce Pembroke results.
+
+				060711
+				Fixed line and right ROIs (LineROIStop and RightROIStop) so
+				that they no longer have 3 vertices (oops!).  Modified
+				MoveROIVertex so that right ROIs remain horizontal or vertical
+				and rectangle ROIs remain rectangles when one vertex is moved.
+
+				060712
+				Improvements to ROI table UI.
+
+				060713
+				Changed table editing to changes are only saved if the user
+				presses enter.
+
+				060724
+				Version used to generate Osler results.
+
+				070228
+				Converted SPECT version to PET.
+
+				070301
+				Added decay to dose calculation.
+
+				070302
+				Added occupancy factor input for regions and improved
+				output tables.
+
+				070328
+				Moved open, save, calculate and some ROI tools out of
+				the main program and into their own files.
+				Added GetIntersection - a function that returns the
+				point of intersection of 2 lines (required for floor
+				above and below dose calcs).
+				Fixed max pixel updating problem.
+				Added persistent structures that define table
+				headers.
+				Added save of table data (source-region, dose and
+				structure info)
+
+				070829
+				Added a view menu with options for grayscale or colour.
+				Colour option shows regions over 50 uSv and accounts
+				for occupancy.
+
+				070404
+				Added ROI save/open feature.  Added attachROI so that
+				individual ROIs can be added to the display.
+				Modified FileOpen::SaveROIs and FileOpen::OpenROIs.
+
+				070415
+				Added ability to shift display for printing purposes
+				(shiftTLHC).
+
+				070501
+				More display features (show/hide DoseMap, Sources,
+				Shields, Regions).
+
+				071213
+				Even more display features (to show floor shielding
+				for floor above/below).
+
+				071220
+				Specification of shielding height and height above ground.
+
+				080404
+				Fixed GUI to fit widescreen (laptoppy II).
+
+				080407
+				Added Format->ROIs to menu.  Allows user to change ROI
+
+				thickness and text size.  Required changes to
+				MKgrROI__define's init, get and set methods.
+
+				080412
+				Added more dosemap colour options.
+
+				080509
+				Added horizontal (floor/ceiling) shielding features.
+				Changed toolbar bitmaps.

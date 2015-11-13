@@ -1,0 +1,18 @@
+; User preferences for contour_pet_ct
+
+;
+;  Session specific parameters
+;
+
+;
+;  File locations
+;
+pref_data_dir = 'F:\Work\PET Facility Design\TBay\';'C:\Work\SPECT Facility Design\Halifax\'
+
+pref_write_dir = 'F:\Work\PET Facility Design\TBay\';'C:\Work\SPECT Facility Design\Halifax\'
+
+temp_write_dir = 'F:\Work\PET Facility Design\TBay\';'C:\Work\SPECT Facility Design\Halifax\'
+
+; Level of interest ('above', 'below' or '')
+pref_level = ''
+

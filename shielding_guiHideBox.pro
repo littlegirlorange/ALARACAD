@@ -1,0 +1,268 @@
+;+
+; NAME:
+;  shielding_guiHideBox
+;
+; PURPOSE:
+;
+;  This function allows the user to type some text in a
+;  pop-up dialog widget and have it returned to the program.
+;  This is an example of a Pop-Up Dialog Widget.
+;
+; AUTHOR:
+;
+;       FANNING SOFTWARE CONSULTING
+;       David Fanning, Ph.D.
+;       1645 Sheely Drive
+;       Fort Collins, CO 80526 USA
+;       Phone: 970-221-0438
+;       E-mail: davidf@dfanning.com
+;       Coyote's Guide to IDL Programming: http://www.dfanning.com
+;
+; CATEGORY:
+;
+;  Utility, Widgets
+;
+; CALLING SEQUENCE:
+;
+;  thetext = shielding_guiHideBox()
+;
+; INPUTS:
+;
+;  None.
+;
+; KEYWORD PARAMETERS:
+;
+;  CANCEL: An output parameter. If the user kills the widget or clicks the Cancel
+;       button this keyword is set to 1. It is set to 0 otherwise. It
+;       allows you to determine if the user canceled the dialog without
+;       having to check the validity of the answer.
+;
+;       theText = shielding_guiHideBox(Title='Provide Phone Number...', Label='Number:', Cancel=cancelled)
+;       IF cancelled THEN Return
+;
+;  GROUP_LEADER: The widget ID of the group leader of this pop-up
+;       dialog. This should be provided if you are calling
+;       the program from within a widget program:
+;
+;          thetext = shielding_guiHideBox(Group_Leader=event.top)
+;
+;       If a group leader is not provided, an unmapped top-level base widget
+;       will be created as a group leader.
+;
+;  LABEL: A string the appears to the left of the text box.
+;
+;  TITLE:  The title of the top-level base. If not specified, the
+;       string 'Provide Input:' is used by default.
+;
+;  VALUE: A string variable that is the intial value of the shielding_guiHideBox. By default, a null string.
+;
+;  XSIZE: The size of the text widget in pixel units. By default, 200.
+;
+; OUTPUTS:
+;
+;  theText: The string of characters the user typed in the
+;       text widget. No error checking is done.
+;
+; RESTRICTIONS:
+;
+;  The widget is destroyed if the user clicks on either button or
+;  if they hit a carriage return (CR) in the text widget. The
+;  text is recorded if the user hits the ACCEPT button or hits
+;  a CR in the text widget.
+;
+; MODIFICATION HISTORY:
+;
+;  Written by: David W. Fanning, December 20, 2001.
+;  Added VALUE keyword to set the initial value of the text box. 4 Nov 2002. DWF.
+;-
+;
+;###########################################################################
+;
+; LICENSE
+;
+; This software is OSI Certified Open Source Software.
+; OSI Certified is a certification mark of the Open Source Initiative.
+;
+; Copyright © 2000-2002 Fanning Software Consulting.
+;
+; This software is provided "as-is", without any express or
+; implied warranty. In no event will the authors be held liable
+; for any damages arising from the use of this software.
+;
+; Permission is granted to anyone to use this software for any
+; purpose, including commercial applications, and to alter it and
+; redistribute it freely, subject to the following restrictions:
+;
+; 1. The origin of this software must not be misrepresented; you must
+;    not claim you wrote the original software. If you use this software
+;    in a product, an acknowledgment in the product documentation
+;    would be appreciated, but is not required.
+;
+; 2. Altered source versions must be plainly marked as such, and must
+;    not be misrepresented as being the original software.
+;
+; 3. This notice may not be removed or altered from any source distribution.
+;
+; For more information on Open Source Software, visit the Open Source
+; web site: http://www.opensource.org.
+;
+;###########################################################################
+
+
+PRO shielding_guiHideBox_CenterTLB, tlb
+
+   ; This utility routine centers the TLB.
+
+Device, Get_Screen_Size=screenSize
+IF screenSize[0] GT 2000 THEN screenSize[0] = screenSize[0]/2 ; Dual monitors.
+xCenter = screenSize(0) / 2
+yCenter = screenSize(1) / 2
+
+geom = Widget_Info(tlb, /Geometry)
+xHalfSize = geom.Scr_XSize / 2
+yHalfSize = geom.Scr_YSize / 2
+
+Widget_Control, tlb, XOffset = xCenter-xHalfSize, $
+   YOffset = yCenter-yHalfSize
+
+END ;-----------------------------------------------------
+
+
+
+PRO shielding_guiHideBox_Event, event
+
+   ; This event handler responds to all events. Widget
+   ; is always destoyed. The text is recorded if ACCEPT
+   ; button is selected or user hits CR in text widget.
+
+	Widget_Control, event.top, Get_UValue=info
+		CASE event.ID OF
+			info.wShowAllButton: begin
+				nButtons = n_elements( info.wHideButtons )
+				for i=0, nButtons-1 do begin
+					widget_control, info.wHideButtons[i], SET_BUTTON=0
+				endfor
+			end
+			info.wHideAllButton: begin
+				nButtons = n_elements( info.wHideButtons )
+				for i=0, nButtons-1 do begin
+					widget_control, info.wHideButtons[i], SET_BUTTON=1
+				endfor
+			end
+			info.wCancelButton: widget_control, event.top, /DESTROY
+			info.wAcceptButton: begin
+				nButtons = n_elements( info.wHideButtons )
+				for i=0, nButtons-1 do begin
+					 bHide = widget_info( info.wHideButtons[i], /BUTTON_SET )
+					 (*info.ptr).hide[i] = bHide
+				endfor
+				(*info.ptr).cancel = 0
+				widget_control, event.top, /DESTROY
+			end
+			else:
+		ENDCASE
+
+END ;-----------------------------------------------------
+
+
+
+FUNCTION shielding_guiHideBox, $
+	GROUP_LEADER	= groupLeader, $
+	TITLE			= title, $
+	NAMES			= names, $
+	HIDE			= hide, $
+	CANCEL			= cancel
+
+   ; Return to caller if there is an error. Set the cancel
+   ; flag and destroy the group leader if it was created.
+
+Catch, theError
+IF theError NE 0 THEN BEGIN
+   Catch, /Cancel
+   ok = Dialog_Message(!Error_State.Msg)
+   cancel = 1
+   RETURN, 0
+ENDIF
+
+   ; Check parameters and keywords.
+
+if n_elements(title) eq 0 then title = 'Hide ROIs'
+
+   ; Provide a group leader if not supplied with one. This
+   ; is required for modal operation of widgets. Set a flag
+   ; for destroying the group leader widget before returning.
+
+if n_elements(groupLeader) eq 0 then begin
+	groupLeader = widget_base( MAP=0 )
+	widget_control, groupLeader, /REALIZE
+	destroy_groupleader = 1
+endif else destroy_groupleader = 0
+
+   ; Create modal base widget.
+device, GET_SCREEN=scrnSize
+
+tlb = widget_base( TITLE=title, /COLUMN, /MODAL, $
+   /BASE_ALIGN_CENTER, GROUP_LEADER=groupLeader )
+
+   ; Create the rest of the widgets.
+
+wBase = widget_base( tlb, /ROW, SPACE=4, /SCROLL, SCR_YSIZE=scrnSize[1]-200 )
+wHideButtonBase = widget_base( wBase, /COLUMN, /NONEXCLUSIVE, $
+		/ALIGN_CENTER, /SCROLL )
+nRois = n_elements( names )
+names = strtrim(names,2)
+wHideButtons = lonarr( nRois )
+for i=0, nRois-1 do begin
+	wHideButtons[i] = widget_button( wHideButtonBase, VALUE=names[i], XSIZE=40 )
+	widget_control, wHideButtons[i], SET_BUTTON=hide[i]
+endfor
+
+wAllBase = widget_base( tlb, /ROW )
+wShowAllButton = widget_button( wAllBase, VALUE='Show All' )
+wHideAllButton = widget_button( wAllBase, VALUE='Hide All' )
+
+wEndBase = widget_base( tlb, /ROW )
+wCancelButton = widget_button( wEndBase, Value='Cancel' )
+wAcceptButton = widget_button( wEndBase, Value='Accept' )
+widget_control, wAcceptButton, /INPUT_FOCUS
+
+shielding_guiHideBox_CenterTLB, tlb
+widget_control, tlb, /REALIZE
+
+   ; Create a pointer for the text the user will type into the program.
+   ; The cancel field is set to 1 to indicate that the user canceled
+   ; the operation. Only if a successful conclusion is reached (i.e.,
+   ; a Carriage Return or Accept button selection) is the cancel field
+   ; set to 0.
+
+ptr = ptr_new({	hide:			hide, $
+				cancel:			1})
+
+   ; Store the program information:
+
+info = { ptr:				ptr, $
+		 wHideButtons:		wHideButtons, $
+		 wShowAllButton:	wShowAllButton, $
+		 wHideAllButton:	wHideAllButton, $
+		 wCancelButton:		wCancelButton, $
+		 wAcceptButton:		wAcceptButton }
+
+widget_control, tlb, SET_UVALUE=info, /NO_COPY
+
+   ; Blocking or modal widget, depending upon group leader.
+
+xmanager, 'shielding_guiHideBox', tlb
+
+   ; Return from block. Return the text to the caller of the program,
+   ; taking care to clean up pointer and group leader, if needed.
+   ; Set the cancel keyword.
+
+hide	= (*ptr).hide
+cancel	= (*ptr).cancel
+Ptr_Free, ptr
+IF destroy_groupleader THEN Widget_Control, groupleader, /Destroy
+
+RETURN, 1
+END ;-----------------------------------------------------
+
+
