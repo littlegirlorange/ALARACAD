@@ -927,28 +927,28 @@ end ; of shielding_guiPrintLength
 ;
 ;    PURPOSE  Change the colour of a ROI
 ;
-pro shielding_guiSetROIColour, $
-	pInfo, $
-	oROI, $
-	COLOR=color
-
-	if not obj_valid( oROI ) then return
-	if n_elements( color ) eq 0 then return
-
-	; Get the corresponding display ROI
-	oROIGroup = (*pInfo).oROIGroup
-	bContained = oROIGroup->isContained( oROI, POSITION=pos )
-	if not bContained then return
-	oDispROI = (*pInfo).oDispROIGroup->get( POSITION=pos )
-
-	; Set the color
-	oROI->setProperty, COLOR=color
-	oDispROI->setProperty, COLOR=color
-
-	; Redisplay
-	(*pInfo).oWindow->draw, (*pInfo).oViewGroup
-
-end ; of shielding_guiSetROIColour
+;pro shielding_guiSetROIColour, $
+;	pInfo, $
+;	oROI, $
+;	COLOR=color
+;
+;	if not obj_valid( oROI ) then return
+;	if n_elements( color ) eq 0 then return
+;
+;	; Get the corresponding display ROI
+;	oROIGroup = (*pInfo).oROIGroup
+;	bContained = oROIGroup->isContained( oROI, POSITION=pos )
+;	if not bContained then return
+;	oDispROI = (*pInfo).oDispROIGroup->get( POSITION=pos )
+;
+;	; Set the color
+;	oROI->setProperty, COLOR=color
+;	oDispROI->setProperty, COLOR=color
+;
+;	; Redisplay
+;	(*pInfo).oWindow->draw, (*pInfo).oViewGroup
+;
+;end ; of shielding_guiSetROIColour
 
 
 ;--------------------------------------------------------------------
@@ -972,14 +972,14 @@ pro shielding_guiSetROIColours, $
 
 	for i=0, nROIs-1 do begin
 
-		oROIs[i]->getProperty, NAME=name, SYMBOL=oSym, UVALUE=oMaxROI
-		oDispROIs[i]->getProperty, UVALUE=oDispMaxROI
+		oROIs[i]->getProperty, NAME=name, SYMBOL=oSym, UVALUE=oMaxROI, THICK=lineThick
+		oDispROIs[i]->getProperty, UVALUE=oDispMaxROI, THICK=lineThick
 		prefix = (strsplit( name, '_', /EXTRACT ))[0]
 		color = 0
 
 		case prefix of
 			'P': begin
-				color = [255,100,0]		; orange
+				color = [0,200,0]		; orange
 			end
 			'R': begin
 				color = [0,0,255]		; blue
@@ -989,7 +989,51 @@ pro shielding_guiSetROIColours, $
 				if nRows eq 1 then begin
 					material = sTable[eS.material,rows[0]]
 					case material of
-						'Lead': 	color = [255,0,0] 		; red
+						'Lead': begin
+						    color = [255,0,0] 		; red
+						    thickness = float(sTable[eS.thickness, rows[0]])
+						    if (*pInfo).modality eq 'PET' then begin
+						        if (thickness lt 0.64) then begin ; < 1/4 inch
+						            color = [255, 165, 0]   ; orange
+						            lineThick = 2
+						        endif else if (thickness ge 0.64) && (thickness lt 1.28) then begin ; 1/4 inch to <1/2 inch
+						            color = [255, 140, 0]   ; dark orange
+						            lineThick = 3
+						        endif else if (thickness ge 1.28) && (thickness lt 2.54) then begin     ; 1/2 inch to <1 inch
+						            color = [255, 69, 0]    ; orange red
+						            lineThick = 4
+						        endif else if (thickness ge 2.54) && (thickness lt 2.54*1.5) then begin     ; 1 inch to < 1.5 inches
+						            color = [255, 0, 0]     ; red
+						            lineThick = 5
+						        endif else begin
+						            color = [139, 0, 0]     ; dark red
+						            lineThick = 6
+						        endelse
+						     endif else begin
+						        if (thickness le 0.08) then begin ; <= 1/32 in
+						            color = [255, 165, 0]   ; orange
+						            lineThick = 2
+						        endif else if (thickness gt 0.08) && (thickness le 0.16) then begin ; 1/16 in
+						            color = [255, 140, 0]   ; dark orange
+						            lineThick = 3
+						        endif else if (thickness gt 0.16) && (thickness le 0.32) then begin ; 1/8 in
+						            color = [255, 69, 0]    ; orange red
+						            lineThick = 4
+						        endif else if (thickness gt 0.32) && (thickness le 0.64) then begin ; 1/4 in
+						            color = [255, 0, 0]     ; red
+						            lineThick = 5
+						        endif else if (thickness gt 0.64) && (thickness le 1.28) then begin ; 1/2 in
+						            color = [139, 0, 0]     ; dark red
+						            lineThick = 6
+						        endif else if (thickness gt 1.28) && (thickness le 2.54) then begin ; 1 in
+						            color = [139, 0, 0]     ; dark red
+						            lineThick = 7
+						        endif else begin
+						            color = [128, 0, 0]     ; maroon
+						            lineThick = 8
+						        endelse
+						    endelse
+						endcase
 						'Concrete':	color = [160,32,240]	; purple
 						else:		color = [255,0,0]		; red by default
 					endcase
@@ -1017,13 +1061,13 @@ pro shielding_guiSetROIColours, $
 
 		; Set the colour
 		if n_elements( color ) gt 1 then begin
-			oROIs[i]->setProperty, COLOR=color
+			oROIs[i]->setProperty, COLOR=color, THICK=lineThick
 			if obj_valid( oMaxROI ) then begin
 				oMaxROI->getProperty, SYMBOL=oSym
 				oSym->setProperty, COLOR=color
 				oMaxROI->setProperty, COLOR=color
 			endif
-			oDispROIs[i]->setProperty, COLOR=color
+			oDispROIs[i]->setProperty, COLOR=color, THICK=lineThick
 			if obj_valid( oDispMaxROI ) then begin
 				oDispMaxROI->getProperty, SYMBOL=oSym
 				oSym->setProperty, COLOR=color
@@ -1034,6 +1078,138 @@ pro shielding_guiSetROIColours, $
 	endfor
 
 end ; of shielding_guiSetROIColours
+
+
+;--------------------------------------------------------------------
+;
+;    PURPOSE  Set the colour and thickness of the ROI based on type
+;             (and material and thickness for shield ROIs)
+;
+pro shielding_guiSetROIColour, $
+	pInfo, $
+	oROI
+
+	if not obj_valid( oROI ) then return
+
+	; Get the corresponding display ROI
+	oROIGroup = (*pInfo).oROIGroup
+	bContained = oROIGroup->isContained( oROI, POSITION=pos )
+	if not bContained then return
+	oDispROI = (*pInfo).oDispROIGroup->get( POSITION=pos )
+
+	; Get structural ROI table info
+	widget_control, (*pInfo).wShieldTable, GET_VALUE=sTable
+	widget_control, (*pInfo).wHShieldTable, GET_VALUE=hTable
+
+	eS = (*pInfo).eS
+	eH = (*pInfo).eH
+
+    oROI->getProperty, NAME=name, SYMBOL=oSym, UVALUE=oMaxROI, THICK=lineThick, COLOR=color
+    oDispROI->getProperty, UVALUE=oDispMaxROI, THICK=lineThick, COLOR=color
+    prefix = (strsplit( name, '_', /EXTRACT ))[0]
+
+    case prefix of
+	    'P': begin
+			color = [0,200,0]		; green
+		end
+		'R': begin
+			color = [0,0,255]		; blue
+		end
+		'S': begin
+			rows = where( sTable[eS.name,*] eq name, nRows )
+			if nRows eq 1 then begin
+				material = sTable[eS.material,rows[0]]
+				case material of
+					'Lead': begin
+					    color = [255,0,0] 		; red
+					    thickness = float(sTable[eS.thickness, rows[0]])
+					    if (*pInfo).modality eq 'PET' then begin
+					        if (thickness lt 0.64) then begin ; < 1/4 inch
+					            color = [255, 165, 0]   ; orange
+					            lineThick = 2
+					        endif else if (thickness ge 0.64) && (thickness lt 1.28) then begin ; 1/4 inch to <1/2 inch
+					            color = [255, 140, 0]   ; dark orange
+					            lineThick = 3
+					        endif else if (thickness ge 1.28) && (thickness lt 2.54) then begin     ; 1/2 inch to <1 inch
+					            color = [255, 69, 0]    ; orange red
+					            lineThick = 4
+					        endif else if (thickness ge 2.54) && (thickness lt 2.54*1.5) then begin     ; 1 inch to < 1.5 inches
+					            color = [255, 0, 0]     ; red
+					            lineThick = 5
+					        endif else begin
+					            color = [139, 0, 0]     ; dark red
+					            lineThick = 6
+					        endelse
+					     endif else begin
+					        if (thickness le 0.08) then begin ; <= 1/32 in
+					            color = [255, 165, 0]   ; orange
+					            lineThick = 2
+					        endif else if (thickness gt 0.08) && (thickness le 0.16) then begin ; 1/16 in
+					            color = [255, 140, 0]   ; dark orange
+					            lineThick = 3
+					        endif else if (thickness gt 0.16) && (thickness le 0.32) then begin ; 1/8 in
+					            color = [255, 69, 0]    ; orange red
+					            lineThick = 4
+					        endif else if (thickness gt 0.32) && (thickness le 0.64) then begin ; 1/4 in
+					            color = [255, 0, 0]     ; red
+					            lineThick = 5
+					        endif else if (thickness gt 0.64) && (thickness le 1.28) then begin ; 1/2 in
+					            color = [139, 0, 0]     ; dark red
+					            lineThick = 6
+					        endif else if (thickness gt 1.28) && (thickness le 2.54) then begin ; 1 in
+					            color = [139, 0, 0]     ; dark red
+					            lineThick = 7
+					        endif else begin
+					            color = [128, 0, 0]     ; maroon
+					            lineThick = 8
+					        endelse
+					    endelse
+					end
+					'Concrete':	color = [160,32,240]	; purple
+					else:		color = [255,0,0]		; red by default
+				endcase
+			endif else begin
+				; Multiple materials
+				color = [255,192,203]	; pink
+			endelse
+		end
+		'H': begin
+			rows = where( hTable[eH.name,*] eq name, nRows )
+			if nRows eq 1 then begin
+				material = hTable[eH.material,rows[0]]
+				case material of
+					'Lead': 	color = [255,0,0] 		; red
+					'Concrete':	color = [160,32,240]	; purple
+					else:		color = [255,0,0]		; red by default
+				endcase
+			endif else begin
+				; Multiple materials
+				color = [255,192,203]	; pink
+			endelse
+		end
+		else: color = [0,0,255] ; blue (no prefix->maxROI)
+	endcase
+
+	; Set the colour
+	if n_elements( color ) gt 1 then begin
+		oROI->setProperty, COLOR=color, THICK=lineThick
+		if obj_valid( oMaxROI ) then begin
+			oMaxROI->getProperty, SYMBOL=oSym
+			oSym->setProperty, COLOR=color
+			oMaxROI->setProperty, COLOR=color
+		endif
+		oDispROI->setProperty, COLOR=color, THICK=lineThick
+		if obj_valid( oDispMaxROI ) then begin
+			oDispMaxROI->getProperty, SYMBOL=oSym
+			oSym->setProperty, COLOR=color
+			oDispMaxROI->setProperty, COLOR=color
+		endif
+	endif
+
+	; Redisplay
+	(*pInfo).oWindow->draw, (*pInfo).oViewGroup
+
+end ; of shielding_guiSetROIColour
 
 
 ;--------------------------------------------------------------------
@@ -1359,7 +1535,7 @@ function shielding_guiHandleStructEntry, $
 					else:		color = [255,  0,  0] ; red by default
 				endcase
 			endif
-			shielding_guiSetROIColour, pInfo, (*pInfo).oCurROI, COLOR=color
+			shielding_guiSetROIColour, pInfo, (*pInfo).oCurROI
 		endelse
 
 	endif
@@ -1467,7 +1643,7 @@ function shielding_guiHandleHShieldEntry, $
 					else:		color = [255,  0,  0] ; red by default
 				endcase
 			endif
-			shielding_guiSetROIColour, pInfo, (*pInfo).oCurROI, COLOR=color
+			shielding_guiSetROIColour, pInfo, (*pInfo).oCurROI
 		endelse
 
 	endif
@@ -2048,7 +2224,7 @@ pro shielding_guiSetShieldSpecs, $
 		else:		color = [255,  0,  0]	; red by default
 	endcase
 
-	shielding_guiSetROIColour, pInfo, oROI, COLOR=color
+	shielding_guiSetROIColour, pInfo, oROI
 
 end ; of shielding_guiSetShieldSpecs
 
@@ -2155,7 +2331,7 @@ pro shielding_guiSetHShieldSpecs, $
 		else:		color = [255,  0,  0] ; red by default
 	endcase
 
-	shielding_guiSetROIColour, pInfo, oROI, COLOR=color
+	shielding_guiSetROIColour, pInfo, oROI
 
 end ; of shielding_guiSetHShieldSpecs
 
@@ -3100,7 +3276,8 @@ pro shielding_guiResetLastMode, $
 
 			; Reset ROI colour and hide vertices
 			if obj_valid( (*pInfo).oDispCurROI ) then begin
-				(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
+			    shielding_guiSetROIColour, pInfo, (*pInfo).oDispCurROI
+				;(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
 				(*pInfo).oDispCurROI = obj_new()
 			endif
 			(*pInfo).oVertexModel->setProperty, HIDE=1
@@ -3117,7 +3294,8 @@ pro shielding_guiResetLastMode, $
 
 			; Reset ROI colour and hide vertices
 			if obj_valid( (*pInfo).oDispCurROI ) then begin
-				(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
+			    shielding_guiSetROIColour, pInfo, (*pInfo).oDispCurROI
+				;(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
 				(*pInfo).oDispCurROI = obj_new()
 			endif
 			(*pInfo).oVertexModel->setProperty, HIDE=1
@@ -3135,10 +3313,12 @@ pro shielding_guiResetLastMode, $
 
 			; Reset ROI colour and hide vertices
 			if obj_valid( (*pInfo).oDispCurROI ) then begin
-				(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
+			    shielding_guiSetROIColour, pInfo, (*pInfo).oDispCurROI
+				;(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
 				(*pInfo).oDispCurROI = obj_new()
 			endif
 			(*pInfo).oVertexModel->setProperty, HIDE=1
+
 
 			(*pInfo).oCurROI = obj_new()
 			(*pInfo).curVertIndex = -1L
@@ -3153,7 +3333,8 @@ pro shielding_guiResetLastMode, $
 
 			; Reset ROI colour and hide vertices
 			if obj_valid( (*pInfo).oDispCurROI ) then begin
-				(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
+			    shielding_guiSetROIColour, pInfo, (*pInfo).oDispCurROI
+				;(*pInfo).oDispCurROI->setProperty, COLOR=[255,0,0]
 				(*pInfo).oDispCurROI = obj_new()
 			endif
 			(*pInfo).oVertexModel->setProperty, HIDE=1
@@ -3901,9 +4082,9 @@ function shielding_guiAddSourcePoint, $
 		; Create new ROI
 		oSymbol = obj_new( 'IDLgrSymbol', 5, SIZE=5 )
 		oROI = obj_new( 'IDLgrROI', DATA=imgCoords, $
-				COLOR=[255,100,0], STYLE=0, SYMBOL=oSymbol ) ; point
+				COLOR=[0,200,0], STYLE=0, SYMBOL=oSymbol ) ; point
 		oDispROI = obj_new( 'MKgrROI', DATA=imgCoords, $
-				COLOR=[255,100,0], STYLE=0, SYMBOL=oSYMBOL, $
+				COLOR=[0,200,0], STYLE=0, SYMBOL=oSYMBOL, $
 				THICK=(*pInfo).roiThick, TEXT_SIZE=(*pInfo).textSize )
 
 		; Add this to this group
@@ -8002,7 +8183,7 @@ pro shielding_gui, $
 	; Create a colour bar
 	oCBView	= obj_new( 'IDLgrView', /TRANSPARENT )
 	oViewGroup->add, oCBView
-	oCBar	= obj_new('HColorBar', HIDE=1, POSITION=[0.5, -0.9, 0.95, -0.86], $
+	oCBar	= obj_new('HColorBar', HIDE=1, POSITION=[-0.975, -0.9, -0.75, -0.86], $
 			FONTSIZE=11 )
 	oCBView->add, oCBar
 	oTransPalette = obj_new( 'IDLgrPalette' )
@@ -8010,7 +8191,7 @@ pro shielding_gui, $
 	; Create a ruler bar
 	oRulerView	= obj_new( 'IDLgrView', /TRANSPARENT )
 	oViewGroup->add, oRulerView
-	oRuler	= obj_new( 'HRuler', HIDE=1, POSITION=[0.5, -0.9, 0.95, -0.9], $
+	oRuler	= obj_new( 'HRuler', HIDE=1, POSITION=[-0.975, -0.9, -0.75, -0.9], $;[0.5, -0.9, 0.95, -0.9], $
 			TEXTPOS=1, TICKPOS=0, TITLE='meters', MAJOR=3, MINOR=0, $
 			FONTSIZE=11, TICKLEN=0.05 )
 	oRulerView->add, oRuler

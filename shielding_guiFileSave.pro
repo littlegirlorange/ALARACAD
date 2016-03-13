@@ -155,12 +155,14 @@ pro shielding_guiSaveSourceRegionTable, $
 
 		for iP=0, nPRois-1 do begin
 
-			rows = where( pData[eP.name,*] eq pNames[iP] )
-			xP = float( pData[eP.x,rows[0]] )
-			yP = float( pData[eP.y,rows[0]] )
+			rows = where( pData[eP.name,*] eq pNames[iP], nFound )
+			if nFound gt 0 then begin
+    			xP = float( pData[eP.x,rows[0]] )
+    			yP = float( pData[eP.y,rows[0]] )
 
-			d = sqrt( (xR-xP)^2 + (yR-yP)^2 + height^2 )
-			line = line + format_float( d ) + ';'
+    			d = sqrt( (xR-xP)^2 + (yR-yP)^2 + height^2 )
+    			line = line + format_float( d ) + ';'
+    		endif
 
 		endfor
 

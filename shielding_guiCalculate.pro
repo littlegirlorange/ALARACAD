@@ -781,7 +781,7 @@ pro shielding_guiCalculate, $
 		xOffset = round( (dmScale-fpScale)/2.0/fpScale )
 		xVals = findgen( (*pInfo).nPx ) * fpScale / dmScale
 		yVals = findgen( (*pInfo).nPy ) * fpScale / dmScale
-		if dmScale > fpScale then begin
+		if dmScale gt fpScale then begin
 	;		xOffset = -xOffset
 			xVals = floor( xVals )
 			yVals = floor( yVals )
