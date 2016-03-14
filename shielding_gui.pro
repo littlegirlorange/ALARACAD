@@ -705,13 +705,15 @@ pro shielding_guiAttachROI, $
 
 	endif
 
+	prefix = (strsplit( name, '_', /EXTRACT ))[0]
+	bHideText = prefix eq 'S' and (*pInfo).bHideText
 	oDispROI = obj_new( 'MKgrROI', NAME=name, $
 			DATA=data, COLOR=color, SYMBOL=oSym, THICK=(*pInfo).roiThick, $
-			TEXT_SIZE=(*pInfo).textSize, HIDE=hide, TEXT_HIDE=hide )
+			TEXT_SIZE=(*pInfo).textSize, HIDE=hide, TEXT_HIDE=bHideText )
 			oDispROIGroup->add, oDispROI, POS=pos
 
 	; Rebuild maxROI if its a region
-	prefix = (strsplit( name, '_', /EXTRACT ))[0]
+
 	if prefix eq 'R' and total( *(*pInfo).pSeries1 ) gt 0 then begin
 		shielding_guiFindMax, pInfo, oROI
 	endif
@@ -5011,10 +5013,12 @@ end ; of shielding_guiSetCurrentROI
 pro shielding_guiFormatROIs, $
 	pInfo, $
 	THICK=thick, $
-	TEXT_SIZE=textSize
+	TEXT_SIZE=textSize, $
+	TEXT_HIDE=bHideText
 
 	if n_elements( thick ) ne 0 then (*pInfo).roiThick = thick
 	if n_elements( textSize ) ne 0 then (*pInfo).textSize = textSize
+	if n_elements( bHideText ) ne 0 then (*pInfo).bHideText = bHideText
 
 	if not obj_valid( (*pInfo).oDispROIGroup ) then return
 	oROIs = (*pInfo).oDispROIGroup->get( /ALL, COUNT=nROIs )
@@ -5027,10 +5031,21 @@ pro shielding_guiFormatROIs, $
 			oROIs[i]->setProperty, TEXT_SIZE=textSize
 	endfor
 
+    if n_elements( bHideText ) ne 0 then begin
+        oShieldROIs = shielding_guiGetROIs( pInfo, /SHIELDS, COUNT=nROIs, NAMES=names )
+	    for i=0, nROIs-1 do begin
+    		bContained = (*pInfo).oROIGroup->isContained( oShieldROIs[i], POSITION=pos )
+    		oDispROI = (*pInfo).oDispROIGroup->get( POSITION=pos )
+    		if obj_valid( oDispROI ) then begin
+    			oDispROI->setProperty, TEXT_HIDE=bHideText
+		    endif
+        endfor
+    endif
+
 	; Redisplay
 	(*pInfo).oWindow->draw, (*pInfo).oViewGroup
 
-end ; of shielding_guiShiftTLHC
+end
 
 
 ;--------------------------------------------------------------------
@@ -7288,22 +7303,27 @@ pro shielding_guiEvent, $
 
 				'Format': case uv1[1] of
 
-					'ROIs': begin
+					'ROIs': case uv1[2] of
 
-						oDispROIGroup = (*pInfo).oDispROIGroup
-						if not obj_valid( oDispROIGroup ) then return
-						oROIs = oDispROIGroup->get( /ALL, COUNT=nROIs )
-						if nROIs eq 0 then return
-						oROIs[0]->getProperty, THICK=thick, TEXT_SIZE=textSize
-						text = textBox( $
-								GROUP_LEADER=(*pInfo).wTopBase, $
-								TITLE='ROI properties', $
-								LABEL=['Line thickness (1-10, default=1): ', 'Text size (1-10, default=1): '], $
-								VALUE=[string(thick), string(textSize)], $
-								CANCEL=bCancel )
-						if bCancel then return
+                        'Font Size' : begin
+    						oDispROIGroup = (*pInfo).oDispROIGroup
+    						if not obj_valid( oDispROIGroup ) then return
+    						oROIs = oDispROIGroup->get( /ALL, COUNT=nROIs )
+    						if nROIs eq 0 then return
+    						oROIs[0]->getProperty, TEXT_SIZE=textSize
+    						text = textBox( $
+    								GROUP_LEADER=(*pInfo).wTopBase, $
+    								TITLE='ROI properties', $
+    								LABEL=['Text size (1-10, default=1): '], $
+    								VALUE=[string(textSize)], $
+    								CANCEL=bCancel )
+    						if bCancel then return
+    						shielding_guiFormatROIs, pInfo, TEXT_SIZE=float(text[1])
+    					endcase
 
-						shielding_guiFormatROIs, pInfo, THICK=float(text[0]), TEXT_SIZE=float(text[1])
+    					'Show/Hide Shield Label' : begin
+    						shielding_guiFormatROIs, pInfo, TEXT_HIDE=(not (*pInfo).bHideText)
+    					endcase
 
 					endcase ; of uv1[2] (ROIs)
 
@@ -7624,7 +7644,9 @@ pro shielding_gui, $
 				  	  		'0Horizontal shields (H_*)', $
 				  	  		'2Regions (R_*)', $
 				  '1Format', $
-				      '2ROIs', $
+				      '3ROIs', $
+				          '0Font Size', $
+				          '2Show/Hide Shield Label', $
 				  '1View', $
 				  	  '0Shift TLHC', $
 				  	  '0Shift colorbar', $
@@ -8380,6 +8402,7 @@ pro shielding_gui, $
 			 oHPolyModel:			oHPolyModel, $
 			 roiThick:				3.0, $
 			 textSize:				18.0, $
+			 bHideText:             0b, $
 			 oCurROI:				obj_new(), $
 			 oCopyROI:				obj_new( 'MKgrROI' ), $
 			 oDispCopyROI:			oDispCopyROI, $
