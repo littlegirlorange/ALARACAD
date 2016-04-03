@@ -7318,7 +7318,7 @@ pro shielding_guiEvent, $
     								VALUE=[string(textSize)], $
     								CANCEL=bCancel )
     						if bCancel then return
-    						shielding_guiFormatROIs, pInfo, TEXT_SIZE=float(text[1])
+    						shielding_guiFormatROIs, pInfo, TEXT_SIZE=float(text[0])
     					endcase
 
     					'Show/Hide Shield Label' : begin
@@ -7930,7 +7930,7 @@ pro shielding_gui, $
 					COLUMN_WIDTHS=colWidths, $
 					COLUMN_LABELS=colLabels, $
 					XSIZE=n_elements(colLabels), X_SCROLL_SIZE=4, $
-					YSIZE=1, Y_SCROLL_SIZE=2, $
+					YSIZE=1, Y_SCROLL_SIZE=6, $
 					UVALUE=0, EDITABLE=b_tables_editable, /ALL_EVENTS )
 
 			; Region input

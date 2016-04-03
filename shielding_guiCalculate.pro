@@ -456,11 +456,11 @@ pro shielding_guiCalculate, $
 											[[sData[0],sData[1]],[sData[2],sData[3]]] )
 									psFloorDist = sqrt( (coords[0]-pData[0])^2 + $
 											(coords[1]-pData[1])^2 )
-									h = psFloorDist * dist / pqFloorDist
+									h = psFloorDist * dist / pqFloorDist + sourceHeight
 
 									; Assume the source is 1 m above the ground
 									row = (where( shieldNames eq sName, count ))[0]
-									if (h lt (float(sTable[eS.h2,row])-sourceHeight)) and (h gt float(sTable[eS.h1,row])) then begin ; Lines intersect
+									if (h lt float(sTable[eS.h2,row])) and (h gt float(sTable[eS.h1,row])) then begin ; Lines intersect
 										; Remember this structure
 										bIntersects[row] = 1b
 									endif
@@ -473,11 +473,11 @@ pro shielding_guiCalculate, $
 									psFloorDist = sqrt( (coords[0]-pData[0])^2 + $
 											(coords[1]-pData[1])^2 )
 
-									h = psFloorDist * dist / pqFloorDist
+									h = sourceHeight - psFloorDist * dist / pqFloorDist
 
 									; Assume the source is 1 m above the ground
 									row = (where( shieldNames eq sName, count ))[0]
-									if (h lt (sourceHeight-float(sTable[eS.h1,row]))) and (h gt float(sTable[eS.h1,row])) then begin ; Lines intersect
+									if (h lt float(sTable[eS.h2,row])) and (h gt float(sTable[eS.h1,row])) then begin ; Lines intersect
 										; Remember this structure
 										bIntersects[row] = 1b
 									endif
